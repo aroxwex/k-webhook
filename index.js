@@ -13,8 +13,8 @@ const client = new Client({
 });
 
 // Sabit değerler
-const whitelistChannelName = 'whitelist'; // Test için basit isim
-const logChannelName = 'whitelist-log'; // Test için basit isim
+const whitelistChannelName = '🏳️・whitelist'; // Test için basit isim
+const logChannelName = '🗒️・whitelist-log'; // Test için basit isim
 const authorizedRoleId = '1387885041115463830'; // Yetkili rolün ID'si
 const targetRoleId = '1387797050065682462'; // Verilecek rolün ID'si
 const reactionEmojiId = '1387809434675183668'; // Özel emoji ID'si (mc_onay)

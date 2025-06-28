@@ -109,7 +109,7 @@ client.on('messageReactionAdd', async (reaction, user) => {
         if (logChannel && logChannel.permissionsFor(guild.members.me).has(PermissionFlagsBits.SendMessages)) {
             const embed = new EmbedBuilder()
                 .setColor('#34632b')
-                .setDescription(`\`\`\`Mesaj\`\`\` <@${targetMember.user.id}> - (<@${user.id}>)`)
+                .setDescription(`Member: <@${targetMember.user.id}>\`\`\`${message.content}\`\`\`\n Staff: (<@${user.id}>)`)
                 .setTimestamp();
             await logChannel.send({ embeds: [embed] });
         } else {

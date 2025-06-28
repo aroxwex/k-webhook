@@ -21,12 +21,10 @@ const reactionEmojiId = '1387809434675183668'; // Özel emoji ID'si (mc_onay)
 
 // Express sunucusu
 app.get('/ping', (req, res) => {
-    console.log('Express: /ping rotası çağrıldı');
     res.send('Bot aktif!');
 });
 
 app.get('/', (req, res) => {
-    console.log('Express: / rotası çağrıldı');
     res.send('Ana sayfa! Bot çalışıyor.');
 });
 
@@ -38,40 +36,19 @@ app.listen(port, () => {
 client.once('ready', () => {
     console.log(`${client.user.tag} olarak giriş yapıldı!`);
     console.log('Botun bağlı olduğu sunucular:', client.guilds.cache.map(g => `${g.name} (${g.id})`).join(', '));
-    // Botun izinlerini ve kanalları logla
-    client.guilds.cache.forEach(guild => {
-        const botMember = guild.members.me;
-        console.log(`Sunucu: ${guild.name} (${guild.id})`);
-        console.log(`Botun genel izinleri: ${botMember.permissions.toArray().join(', ')}`);
-        console.log(`Kanal listesi: ${guild.channels.cache.map(ch => `${ch.name} (${ch.id})`).join(', ')}`);
-        // Her kanal için botun izinlerini logla
-        guild.channels.cache.forEach(channel => {
-            console.log(`Kanal: ${channel.name} (${channel.id}), İzinler: ${channel.permissionsFor(botMember).toArray().join(', ')}`);
-        });
-    });
 });
 
 // Mesaj olayını debug etmek için
 client.on('messageCreate', async message => {
-    console.log(`Mesaj alındı: ${message.author.tag} - ${message.content} (Kanal: ${message.channel.name || 'Bilinmeyen'}, Sunucu: ${message.guild?.name || 'DM'}, Kanal ID: ${message.channel.id})`);
-    if (!message.guild) {
-        console.log('Mesaj DM\'de alındı, sunucu mesajları işleniyor');
-        return;
-    }
-    if (!message.content.startsWith('-') || message.author.bot) {
-        console.log(`Mesaj filtrelendi: Bot mesajı=${message.author.bot}, Prefix uyuşuyor mu=${message.content.startsWith('-')}`);
-        return;
-    }
+    if (!message.guild || !message.content.startsWith('-') || message.author.bot) return;
 
     const args = message.content.slice(1).trim().split(/ +/);
     const command = args.shift().toLowerCase();
-    console.log(`Komut çalıştırıldı: ${command} (Kullanıcı: ${message.author.tag}, Sunucu: ${message.guild.name}, Kanal: ${message.channel.name})`);
 
     if (command === 'ping') {
         console.log(`Ping komutu çalıştırıldı: ${message.author.tag}`);
         try {
             await message.reply(`Botun pingi: ${client.ws.ping}ms`);
-            console.log('Ping cevabı gönderildi');
         } catch (error) {
             console.error('Ping cevabı gönderilemedi:', error);
         }
@@ -80,13 +57,10 @@ client.on('messageCreate', async message => {
 
 // Mesaj tepkisi eklendiğinde
 client.on('messageReactionAdd', async (reaction, user) => {
-    console.log(`Tepki alındı: ${user.tag} tarafından, emoji: ${reaction.emoji.name || reaction.emoji.id} (Kanal: ${reaction.message.channel.name || 'Bilinmeyen'}, Sunucu: ${reaction.message.guild?.name || 'DM'}, Kanal ID: ${reaction.message.channel.id})`);
-
     // Mesajın tamamını al (kısmi tepki kontrolü)
     if (reaction.partial) {
         try {
             await reaction.fetch();
-            console.log('Kısmi tepki alındı ve fetch edildi');
         } catch (error) {
             console.error('Tepki alınamadı:', error);
             return;
@@ -95,38 +69,23 @@ client.on('messageReactionAdd', async (reaction, user) => {
 
     const message = reaction.message;
     const guild = message.guild;
-    if (!guild) {
-        console.error('Sunucu bulunamadı');
-        return;
-    }
+    if (!guild) return;
 
     const member = await guild.members.fetch(user.id).catch(err => {
         console.error('Kullanıcı alınamadı:', err);
         return null;
     });
 
-    if (!member) {
-        console.error('Kullanıcı fetch edilemedi');
-        return;
-    }
+    if (!member) return;
 
-    // Whitelist kanalında mı kontrol et (büyük-küçük harf duyarlılığını kaldır)
-    if (message.channel.name.toLowerCase() !== whitelistChannelName.toLowerCase()) {
-        console.log(`Tepki whitelist kanalında değil: ${message.channel.name} (Beklenen: ${whitelistChannelName})`);
-        return;
-    }
+    // Whitelist kanalında mı kontrol et
+    if (message.channel.name.toLowerCase() !== whitelistChannelName.toLowerCase()) return;
 
     // Tepki doğru emoji mi kontrol et
-    if (reaction.emoji.id !== reactionEmojiId && reaction.emoji.name !== 'mc_onay') {
-        console.log(`Yanlış emoji: ${reaction.emoji.id || reaction.emoji.name} (Beklenen: ${reactionEmojiId} veya mc_onay)`);
-        return;
-    }
+    if (reaction.emoji.id !== reactionEmojiId && reaction.emoji.name !== 'mc_onay') return;
 
     // Tepkiyi koyan kişi yetkili role sahip mi kontrol et
-    if (!member.roles.cache.has(authorizedRoleId)) {
-        console.log(`Kullanıcı yetkili değil: ${user.tag} (Rol ID: ${authorizedRoleId})`);
-        return;
-    }
+    if (!member.roles.cache.has(authorizedRoleId)) return;
 
     // Mesajın sahibini al
     const targetMember = await guild.members.fetch(message.author.id).catch(err => {
@@ -134,16 +93,10 @@ client.on('messageReactionAdd', async (reaction, user) => {
         return null;
     });
 
-    if (!targetMember) {
-        console.error('Mesaj sahibi fetch edilemedi');
-        return;
-    }
+    if (!targetMember) return;
 
     // Hedef role zaten sahip mi kontrol et
-    if (targetMember.roles.cache.has(targetRoleId)) {
-        console.log(`Kullanıcı zaten role sahip: ${targetMember.user.tag} (Rol ID: ${targetRoleId})`);
-        return;
-    }
+    if (targetMember.roles.cache.has(targetRoleId)) return;
 
     try {
         // Role ver
@@ -154,7 +107,7 @@ client.on('messageReactionAdd', async (reaction, user) => {
         const logChannel = guild.channels.cache.find(ch => ch.name.toLowerCase() === logChannelName.toLowerCase());
         if (logChannel && logChannel.permissionsFor(guild.members.me).has(PermissionFlagsBits.SendMessages)) {
             const embed = new EmbedBuilder()
-                .setColor('#00FF00')
+                .setColor('#34632b')
                 .setTitle('Whitelist Rol Atama')
                 .addFields(
                     { name: 'Üye', value: `${targetMember.user.tag}`, inline: true },
@@ -163,7 +116,6 @@ client.on('messageReactionAdd', async (reaction, user) => {
                 )
                 .setTimestamp();
             await logChannel.send({ embeds: [embed] });
-            console.log('Log mesajı gönderildi');
         } else {
             console.error(`Log kanalı bulunamadı veya izin eksik: ${logChannelName}`);
         }

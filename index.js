@@ -109,8 +109,8 @@ client.on('messageReactionAdd', async (reaction, user) => {
         if (logChannel && logChannel.permissionsFor(guild.members.me).has(PermissionFlagsBits.SendMessages)) {
             const embed = new EmbedBuilder()
                 .setColor('#34632b')
-                .setDescription(`Member: <@${targetMember.user.id}>\`\`\`${message.content}\`\`\`\n Staff: (<@${user.id}>)`)
-                .setTimestamp();
+                .setDescription(`Kullanıcı: <@${targetMember.user.id}> (MC: ${message.content || '*Bilinmiyor*'})\nYetkili: <@${user.id}>`)
+                .setTimestamp()
             await logChannel.send({ embeds: [embed] });
         } else {
             console.error(`Log kanalı bulunamadı veya izin eksik: ${logChannelName}`);

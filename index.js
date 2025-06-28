@@ -13,8 +13,8 @@ const client = new Client({
 });
 
 // Sabit değerler
-const whitelistChannelName = '🏳️・whitelist'; // Test için basit isim
-const logChannelName = '🗒️・whitelist-log'; // Test için basit isim
+const whitelistChannelName = '🏳️・whitelist';
+const logChannelName = '🗒️・whitelist-log';
 const authorizedRoleId = '1387885041115463830'; // Yetkili rolün ID'si
 const targetRoleId = '1387797050065682462'; // Verilecek rolün ID'si
 const reactionEmojiId = '1387809434675183668'; // Özel emoji ID'si (mc_onay)
@@ -110,7 +110,7 @@ client.on('messageReactionAdd', async (reaction, user) => {
             const embed = new EmbedBuilder()
                 .setColor('#34632b')
                 .setDescription(`Member: <@${targetMember.user.id}> \`${message.content || '*Unknown*'}\`\nStaff: <@${user.id}>`)
-                .setTimestamp()
+                .setTimestamp();
             await logChannel.send({ embeds: [embed] });
         } else {
             console.error(`Log kanalı bulunamadı veya izin eksik: ${logChannelName}`);
@@ -122,6 +122,78 @@ client.on('messageReactionAdd', async (reaction, user) => {
             const errorEmbed = new EmbedBuilder()
                 .setColor('#FF0000')
                 .setDescription(`Rol verme hatası: ${error.message}`)
+                .setTimestamp();
+            await logChannel.send({ embeds: [errorEmbed] });
+        }
+    }
+});
+
+// Mesaj tepkisi kaldırıldığında
+client.on('messageReactionRemove', async (reaction, user) => {
+    // Mesajın tamamını al (kısmi tepki kontrolü)
+    if (reaction.partial) {
+        try {
+            await reaction.fetch();
+        } catch (error) {
+            console.error('Tepki alınamadı:', error);
+            return;
+        }
+    }
+
+    const message = reaction.message;
+    const guild = message.guild;
+    if (!guild) return;
+
+    const member = await guild.members.fetch(user.id).catch(err => {
+        console.error('Kullanıcı alınamadı:', err);
+        return null;
+    });
+
+    if (!member) return;
+
+    // Whitelist kanalında mı kontrol et
+    if (message.channel.name.toLowerCase() !== whitelistChannelName.toLowerCase()) return;
+
+    // Tepki doğru emoji mi kontrol et
+    if (reaction.emoji.id !== reactionEmojiId && reaction.emoji.name !== 'mc_onay') return;
+
+    // Tepkiyi kaldıran kişi yetkili role sahip mi kontrol et
+    if (!member.roles.cache.has(authorizedRoleId)) return;
+
+    // Mesajın sahibini al
+    const targetMember = await guild.members.fetch(message.author.id).catch(err => {
+        console.error('Mesaj sahibi alınamadı:', err);
+        return null;
+    });
+
+    if (!targetMember) return;
+
+    // Hedef role sahip mi kontrol et
+    if (!targetMember.roles.cache.has(targetRoleId)) return;
+
+    try {
+        // Rolü kaldır
+        await targetMember.roles.remove(targetRoleId);
+        console.log(`Rol kaldırıldı: ${targetMember.user.tag} -> ${targetRoleId}`);
+
+        // Log kanalına embed mesaj gönder
+        const logChannel = guild.channels.cache.find(ch => ch.name.toLowerCase() === logChannelName.toLowerCase());
+        if (logChannel && logChannel.permissionsFor(guild.members.me).has(PermissionFlagsBits.SendMessages)) {
+            const embed = new EmbedBuilder()
+                .setColor('#92080a')
+                .setDescription(`Member: <@${targetMember.user.id}> \`${message.content || '*Unknown*'}\`\nStaff: <@${user.id}> (Rol Kaldırıldı)`)
+                .setTimestamp();
+            await logChannel.send({ embeds: [embed] });
+        } else {
+            console.error(`Log kanalı bulunamadı veya izin eksik: ${logChannelName}`);
+        }
+    } catch (error) {
+        console.error('Rol kaldırma hatası:', error);
+        const logChannel = guild.channels.cache.find(ch => ch.name.toLowerCase() === logChannelName.toLowerCase());
+        if (logChannel && logChannel.permissionsFor(guild.members.me).has(PermissionFlagsBits.SendMessages)) {
+            const errorEmbed = new EmbedBuilder()
+                .setColor('#FF0000')
+                .setDescription(`Rol kaldırma hatası: ${error.message}`)
                 .setTimestamp();
             await logChannel.send({ embeds: [errorEmbed] });
         }

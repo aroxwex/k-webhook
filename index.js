@@ -36,6 +36,7 @@ app.listen(port, () => {
 client.once('ready', () => {
     console.log(`${client.user.tag} olarak giriş yapıldı!`);
     console.log('Botun bağlı olduğu sunucular:', client.guilds.cache.map(g => `${g.name} (${g.id})`).join(', '));
+    console.log('Bot hazır, whitelist işlemleri için bekliyor!');
 });
 
 // Mesaj olayını debug etmek için
@@ -108,12 +109,7 @@ client.on('messageReactionAdd', async (reaction, user) => {
         if (logChannel && logChannel.permissionsFor(guild.members.me).has(PermissionFlagsBits.SendMessages)) {
             const embed = new EmbedBuilder()
                 .setColor('#34632b')
-                .setTitle('Whitelist Rol Atama')
-                .addFields(
-                    { name: 'Üye', value: `${targetMember.user.tag}`, inline: true },
-                    { name: 'Mesaj', value: message.content || '*Boş mesaj*', inline: true },
-                    { name: 'Yetkili', value: `${user.tag}`, inline: true }
-                )
+                .setDescription(`\`\`\`Mesaj\`\`\` <@${targetMember.user.id}> - (<@${user.id}>)`)
                 .setTimestamp();
             await logChannel.send({ embeds: [embed] });
         } else {
@@ -125,8 +121,7 @@ client.on('messageReactionAdd', async (reaction, user) => {
         if (logChannel && logChannel.permissionsFor(guild.members.me).has(PermissionFlagsBits.SendMessages)) {
             const errorEmbed = new EmbedBuilder()
                 .setColor('#FF0000')
-                .setTitle('Hata')
-                .setDescription(`Rol verme işlemi sırasında bir hata oluştu: ${error.message}`)
+                .setDescription(`Rol verme hatası: ${error.message}`)
                 .setTimestamp();
             await logChannel.send({ embeds: [errorEmbed] });
         }

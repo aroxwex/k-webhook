@@ -15,6 +15,7 @@ const client = new Client({
 // Sabit değerler
 const whitelistChannelName = '🏳️・whitelist';
 const logChannelName = '🗒️・whitelist-log';
+const commandChannelName = 'mc-console'; // Yeni kanal
 const authorizedRoleId = '1387885041115463830'; // Yetkili rolün ID'si
 const targetRoleId = '1387797050065682462'; // Verilecek rolün ID'si
 const reactionEmojiId = '1387809434675183668'; // Özel emoji ID'si (mc_onay)
@@ -109,11 +110,20 @@ client.on('messageReactionAdd', async (reaction, user) => {
         if (logChannel && logChannel.permissionsFor(guild.members.me).has(PermissionFlagsBits.SendMessages)) {
             const embed = new EmbedBuilder()
                 .setColor('#34632b')
-                .setDescription(`Member: <@${targetMember.user.id}> \`${message.content || '*Unknown*'}\`\nStaff: <@${user.id}>`)
+                .setDescription(`Kullanıcı: <@${targetMember.user.id}> (MC: ${message.content || '*Bilinmiyor*'})\nYetkili: <@${user.id}>`)
                 .setTimestamp();
             await logChannel.send({ embeds: [embed] });
         } else {
             console.error(`Log kanalı bulunamadı veya izin eksik: ${logChannelName}`);
+        }
+
+        // Komut kanalına mesaj gönder
+        const commandChannel = guild.channels.cache.find(ch => ch.name.toLowerCase() === commandChannelName.toLowerCase());
+        if (commandChannel && commandChannel.permissionsFor(guild.members.me).has(PermissionFlagsBits.SendMessages)) {
+            await commandChannel.send(`whitelist add ${message.content || '*Bilinmiyor*'}`);
+            console.log(`Komut gönderildi: whitelist add ${message.content || '*Bilinmiyor*'}`);
+        } else {
+            console.error(`Komut kanalı bulunamadı veya izin eksik: ${commandChannelName}`);
         }
     } catch (error) {
         console.error('Rol verme hatası:', error);
@@ -181,11 +191,20 @@ client.on('messageReactionRemove', async (reaction, user) => {
         if (logChannel && logChannel.permissionsFor(guild.members.me).has(PermissionFlagsBits.SendMessages)) {
             const embed = new EmbedBuilder()
                 .setColor('#92080a')
-                .setDescription(`Member: <@${targetMember.user.id}> \`${message.content || '*Unknown*'}\`\nStaff: <@${user.id}> (Rol Kaldırıldı)`)
+                .setDescription(`Kullanıcı: <@${targetMember.user.id}> (MC: ${message.content || '*Bilinmiyor*'})\nYetkili: <@${user.id}> (Rol Kaldırıldı)`)
                 .setTimestamp();
             await logChannel.send({ embeds: [embed] });
         } else {
             console.error(`Log kanalı bulunamadı veya izin eksik: ${logChannelName}`);
+        }
+
+        // Komut kanalına mesaj gönder
+        const commandChannel = guild.channels.cache.find(ch => ch.name.toLowerCase() === commandChannelName.toLowerCase());
+        if (commandChannel && commandChannel.permissionsFor(guild.members.me).has(PermissionFlagsBits.SendMessages)) {
+            await commandChannel.send(`whitelist remove ${message.content || '*Bilinmiyor*'}`);
+            console.log(`Komut gönderildi: whitelist remove ${message.content || '*Bilinmiyor*'}`);
+        } else {
+            console.error(`Komut kanalı bulunamadı veya izin eksik: ${commandChannelName}`);
         }
     } catch (error) {
         console.error('Rol kaldırma hatası:', error);

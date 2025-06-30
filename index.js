@@ -110,7 +110,7 @@ client.on('messageReactionAdd', async (reaction, user) => {
         if (logChannel && logChannel.permissionsFor(guild.members.me).has(PermissionFlagsBits.SendMessages)) {
             const embed = new EmbedBuilder()
                 .setColor('#34632b')
-                .setDescription(`Kullanıcı: <@${targetMember.user.id}> (MC: ${message.content || '*Bilinmiyor*'})\nYetkili: <@${user.id}>`)
+                .setDescription(`Member: <@${targetMember.user.id}> \`${message.content || '*Bilinmiyor*'}\`\nStaff: <@${user.id}>`)
                 .setTimestamp();
             await logChannel.send({ embeds: [embed] });
         } else {
@@ -191,7 +191,7 @@ client.on('messageReactionRemove', async (reaction, user) => {
         if (logChannel && logChannel.permissionsFor(guild.members.me).has(PermissionFlagsBits.SendMessages)) {
             const embed = new EmbedBuilder()
                 .setColor('#92080a')
-                .setDescription(`Kullanıcı: <@${targetMember.user.id}> (MC: ${message.content || '*Bilinmiyor*'})\nYetkili: <@${user.id}> (Rol Kaldırıldı)`)
+                .setDescription(`Member: <@${targetMember.user.id}> \`${message.content || '*Bilinmiyor*'}\`\nStaff: <@${user.id}> (Rol Kaldırıldı)`)
                 .setTimestamp();
             await logChannel.send({ embeds: [embed] });
         } else {
